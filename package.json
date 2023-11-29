@@ -1,0 +1,25 @@
+{
+    "name": "usbuild",
+    "version": "0.0.1",
+    "description": "Grease Monkey Script (UserScript) build tool based on esbuild",
+    "homepage": "https://github.com/LinLin00000000/usbuild",
+    "type": "module",
+    "main": "index.js",
+    "module": "dist/index.js",
+    "files": [
+        "dist"
+    ],
+    "scripts": {
+        "build": ""
+    },
+    "keywords": [],
+    "author": "Lin <i@linlin.me>",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/LinLin00000000/usbuild.git"
+    },
+    "bugs": {
+        "url": "https://github.com/LinLin00000000/usbuild/issues"
+    }
+}
