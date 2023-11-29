@@ -4,15 +4,13 @@
     "description": "Grease Monkey Script (UserScript) build tool based on esbuild",
     "homepage": "https://github.com/LinLin00000000/usbuild",
     "type": "module",
-    "main": "index.js",
-    "module": "dist/index.js",
-    "files": [
-        "dist"
+    "keywords": [
+        "userscript",
+        "esbuild",
+        "greasemonkey",
+        "tampermonkey",
+        "violentmonkey"
     ],
-    "scripts": {
-        "build": ""
-    },
-    "keywords": [],
     "author": "Lin <i@linlin.me>",
     "license": "MIT",
     "repository": {
@@ -21,5 +19,9 @@
     },
     "bugs": {
         "url": "https://github.com/LinLin00000000/usbuild/issues"
+    },
+    "dependencies": {
+        "esbuild": "^0.19.8",
+        "open": "^9.1.0"
     }
 }
