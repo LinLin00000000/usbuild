@@ -17,4 +17,4 @@ jobs:
         with:
           token: ${{ secrets.RELEASE_TOKEN }}
           release-type: node
-          package-name: usbuild
+          package-name: '@linlin00/usbuild'
