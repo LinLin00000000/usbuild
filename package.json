@@ -4,6 +4,7 @@
     "description": "Grease Monkey Script (UserScript) build tool based on esbuild",
     "homepage": "https://github.com/LinLin00000000/usbuild",
     "type": "module",
+    "main": "index.js",
     "scripts": {
         "build": ""
     },
