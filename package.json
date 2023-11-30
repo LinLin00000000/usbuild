@@ -8,6 +8,9 @@
     "scripts": {
         "build": ""
     },
+    "files": [
+        "./index.js"
+    ],
     "keywords": [
         "userscript",
         "esbuild",
@@ -19,7 +22,7 @@
     "license": "MIT",
     "repository": {
         "type": "git",
-        "url": "https://github.com/LinLin00000000/usbuild.git"
+        "url": "git+https://github.com/LinLin00000000/usbuild.git"
     },
     "bugs": {
         "url": "https://github.com/LinLin00000000/usbuild/issues"
