@@ -54,11 +54,11 @@ const 超大声 = alert
 ## 已知问题
 
 - 📚 目前仅支持 ES module，所以如果你还在用 commonjs，赶紧跟上时代的步伐吧！
-- 🏗️如果想开发复杂 UI 或者具有很多资源的大型项目, 本项目可能不适合, 可以看看 [vite-plugin-monkey](https://github.com/lisonge/vite-plugin-monkey), 一个重量级解决方案，就像是脚本界的泰坦尼克号！
+- 🏗️ 如果想开发复杂 UI 或者具有很多资源的大型项目, 本项目可能不适合, 可以看看 [vite-plugin-monkey](https://github.com/lisonge/vite-plugin-monkey), 一个重量级解决方案，就像是脚本界的泰坦尼克号！
 
 ## 闲聊
 
-💬建了一个 QQ 交流群, 欢迎来玩QAQ
+💬 建了一个 QQ 交流群, 欢迎来玩QAQ
 
 群号: 733165997
 
