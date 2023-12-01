@@ -18,6 +18,8 @@ export async function build(
     userScriptConfig.name =
         userScriptConfig.name ?? fileName.replace(/[-_]/g, ' ')
 
+    userScriptConfig.version = userScriptConfig.version ?? '0.1.0'
+
     // 🏠 确定最终的输出目录，给我们的脚本一个温馨的家。
     const finalOutdir = path.join(fileDir, outdir)
 
