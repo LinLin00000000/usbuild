@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.2](https://github.com/LinLin00000000/usbuild/compare/v1.0.1...v1.0.2) (2023-12-01)
+
+
+### Bug Fixes
+
+* **bannerBuilder:** 修复在油猴编辑器中可能出现的bug ([f8bd895](https://github.com/LinLin00000000/usbuild/commit/f8bd895fee340f2495496e4a6b6bf5f11292f172))
+
 ## [1.0.1](https://github.com/LinLin00000000/usbuild/compare/v1.0.0...v1.0.1) (2023-11-30)
 
 
