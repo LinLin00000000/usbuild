@@ -101,7 +101,7 @@ export async function build(
             setTimeout(async () => {
                 // 🧹 安装完毕后，清理临时文件，保持我们的环境整洁如新。
                 await fs.unlink(tmpFilePath)
-                
+
                 // 💥 当我们不在开发模式下，就给系统来一个小小的“停机震撼”，优雅地退出进程。
                 if (!dev) {
                     // Mission completed!
@@ -143,11 +143,15 @@ function bannerBuilder(config) {
     const separator = '\n'
     const spaceNum = 2
 
+    // 🛠️ 将 name 字段提前至配置对象的最前端。这不仅是礼貌，更是策略。
+    // 它避免了在油猴编辑器中可能出现的那些小小的报错噩梦。
+    const finalConfig = { name: config.name, ...config }
+
     // 📏 精心计算每个字段的长度，确保整齐对齐，就像是在进行一场精确的排列。
-    const maxLen = Math.max(...Object.keys(config).map(s => s.length))
+    const maxLen = Math.max(...Object.keys(finalConfig).map(s => s.length))
 
     // 🖋️ 为每个配置项创建一个独特的注释行。就像是在画布上细心地勾勒出每一个重要的元素。
-    const fields = Object.entries(config).map(([key, value]) => {
+    const fields = Object.entries(finalConfig).map(([key, value]) => {
         // 📐 为了美观，我们在每个键和值之间加上恰到好处的空格。就像是在文字和文字之间留下呼吸的空间。
         const space = ' '.repeat(maxLen - key.length + spaceNum)
         const keyString = `// @${key}${space}`
