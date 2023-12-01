@@ -2,11 +2,12 @@ import path from 'path'
 import open from 'open'
 import fs from 'fs/promises'
 import esbuild from 'esbuild'
+import portfinder from 'portfinder'
 
 // 🚀 构建函数，让你的油猴脚本起飞！
 export async function build(
     userScriptConfig = {},
-    { dev = false, outdir = 'dist' } = {}
+    { dev = false, outdir = 'dist', host = '127.0.0.1', port = 7100 } = {}
 ) {
     // 🌟 获取调用这个函数的文件的路径，就像一名神秘的探险家寻找宝藏地图。
     const filePath = getCallerFilePath()
@@ -38,40 +39,30 @@ export async function build(
 
     // 🔍 如果是开发模式，我们会像侦探一样密切关注代码的每一个变化。
     if (dev) {
-        await ctx.watch()
+        // 🚀 首先，我们用 portfinder 来获取一个可用的端口，就像找到一个没有人使用的秘密通道。
+        const finalPort = await portfinder.getPortPromise({ port })
+
+        await ctx.serve({
+            host,
+            port: finalPort,
+            servedir: finalOutdir,
+        })
 
         /**
          * 📑 为了避免反复像洗衣机一样安装脚本，我们施展了一个小小的魔法：创建一个中间脚本。
-         * 这个中间脚本就像是一个神奇的桥梁，它通过 @require file://**** 这样一条神秘的路径，巧妙地连接到我们打包后的文件。
+         * 这个中间脚本就像是一个神奇的桥梁，它通过 js 动态插入指向真正脚本位置的 Script 元素，巧妙地连接到我们打包后的文件。
          * 这样的好处是显而易见的——你只需安装这个中间脚本一次，它就会永远忠诚地为你服务，同时保持轻巧，因为它只包含了必要的脚本元数据，而没有一丁点代码的负担。
          * 每当你的源文件有所变动，只需要让你的浏览器做个伸展操般的刷新，变化就会立刻展现在你眼前，就像变魔术一样神奇又有趣！
          */
 
-        generateMetaFile: {
-            const extraRequire = `file://${path.join(
-                finalOutdir,
-                fileName + '.user.js'
-            )}`
+        const fileURL = `http://${host}:${finalPort}/${fileName}.user.js`
+        const metaContent =
+            bannerBuilder(userScriptConfig) + insertScript(fileURL)
 
-            // 📚 处理 require 字段，确保它能够包含所有必要的依赖。
-            const originRequire = userScriptConfig.require
-            const require = Array.isArray(originRequire)
-                ? [...originRequire, extraRequire]
-                : isEmptyString(originRequire)
-                ? extraRequire
-                : [originRequire, extraRequire]
+        const metaFilePath = path.join(finalOutdir, fileName + '.meta.user.js')
 
-            // 📖 生成只包含元数据的文件，轻巧而又不失精确。
-            const metaContent = bannerBuilder({
-                ...userScriptConfig,
-                require,
-            })
-            const metaFilePath = path.join(
-                finalOutdir,
-                fileName + '.meta.user.js'
-            )
-            await fs.writeFile(metaFilePath, metaContent)
-        }
+        // ✍️ 将这个精心准备的中间脚本写入文件，就像在一个神秘的卷轴上写下了古老的咒语。
+        await fs.writeFile(metaFilePath, metaContent)
 
         console.log('👀 watching...')
     } else {
@@ -179,4 +170,23 @@ function isNil(value) {
 // 📃 判断字符串是否为空，就像是在寻找一个故事中的隐藏信息。
 function isEmptyString(str) {
     return isNil(str) || str === ''
+}
+
+function insertScript(src) {
+    return `
+
+;(() => {
+// 🎭 创建一个崭新的 script 元素，就像是在舞台上准备一个新的表演道具。
+const script = document.createElement('script')
+
+// 🌐 设置 script 元素的源文件。这里我们将使用 '${src}' 作为我们神秘脚本的来源。
+script.src = '${src}'
+
+// 🕵️‍♂️ 获取文档的 head 元素，就像是找到了控制整个页面的大脑。
+const head = document.head
+
+// 🚀 将 script 元素插入到 head 的最前端，确保它是第一个被执行的脚本，就像是开场的第一幕。
+head.insertBefore(script, head.firstChild)
+})()
+`
 }

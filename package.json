@@ -29,6 +29,7 @@
     },
     "dependencies": {
         "esbuild": "^0.19.8",
-        "open": "^9.1.0"
+        "open": "^9.1.0",
+        "portfinder": "^1.0.32"
     }
 }
