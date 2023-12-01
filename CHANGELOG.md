@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.1.0](https://github.com/LinLin00000000/usbuild/compare/v1.0.2...v1.1.0) (2023-12-01)
+
+
+### Features
+
+* 优化安装脚本的过程, 使本地开发不用打开插件"访问本地文件"权限 ([04f078e](https://github.com/LinLin00000000/usbuild/commit/04f078ef01f6bf8806693563764c512b36c8ab18))
+* 增加了对 ScriptCat 的本地开发支持 ([d4b0eed](https://github.com/LinLin00000000/usbuild/commit/d4b0eed08f8e51448b47b922b9e5e5f54a1a53b5))
+
+
+### Bug Fixes
+
+* 增加配置中 version 字段的默认值, 防止ScriptCat检测不出脚本 ([d8dce05](https://github.com/LinLin00000000/usbuild/commit/d8dce05b9ec6578299f7f8354ad5b945d9ca58ed))
+
 ## [1.0.2](https://github.com/LinLin00000000/usbuild/compare/v1.0.1...v1.0.2) (2023-12-01)
 
 
