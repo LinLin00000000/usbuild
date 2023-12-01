@@ -37,17 +37,18 @@ export async function build(
         dropLabels: ['usbuild'],
     })
 
+    // 🕵️‍♂️ 我们用 portfinder 来获取一个可用的端口，就像找到一个没有人使用的秘密通道。
+    const finalPort = await portfinder.getPortPromise({ port })
+
+    // 🌍 我们让 esbuild 服务启动起来，在这个新发现的端口上展开我们的小世界。
+    await ctx.serve({
+        host,
+        port: finalPort,
+        servedir: finalOutdir,
+    })
+
     // 🔍 如果是开发模式，我们会像侦探一样密切关注代码的每一个变化。
     if (dev) {
-        // 🚀 首先，我们用 portfinder 来获取一个可用的端口，就像找到一个没有人使用的秘密通道。
-        const finalPort = await portfinder.getPortPromise({ port })
-
-        await ctx.serve({
-            host,
-            port: finalPort,
-            servedir: finalOutdir,
-        })
-
         /**
          * 📑 为了避免反复像洗衣机一样安装脚本，我们施展了一个小小的魔法：创建一个中间脚本。
          * 这个中间脚本就像是一个神奇的桥梁，它通过 js 动态插入指向真正脚本位置的 Script 元素，巧妙地连接到我们打包后的文件。
@@ -79,11 +80,10 @@ export async function build(
             fileName + (dev ? '.meta.user.js' : '.user.js')
 
         // 🌐 接着，创建一个临时的 HTML 文件，作为脚本安装的启动器。这就像是准备一张邀请函，邀请用户体验我们的脚本。
-        const tmpFileName = fileName + '.html'
-        const tmpFilePath = path.join(finalOutdir, tmpFileName)
+        const tmpFilePath = path.join(finalOutdir, fileName + '.html')
 
         // ✍️ 然后，写入 HTML 内容。这段简单的脚本会引导浏览器自动打开并安装我们的油猴脚本，就像魔法一样！
-        const htmlContent = `<script>location.href = './${outScriptFileName}'; window.close()</script>`
+        const htmlContent = `<script>location.href = 'http://${host}:${finalPort}/${outScriptFileName}'; window.close()</script>`
         await fs.writeFile(tmpFilePath, htmlContent)
 
         // 🚀 打开这个临时 HTML 文件，开始安装过程。这就像按下启动按钮，开始我们的脚本安装之旅。
