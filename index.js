@@ -1,7 +1,7 @@
 import path from 'path'
-import open from 'open'
 import fs from 'fs/promises'
 import esbuild from 'esbuild'
+import open, { apps } from 'open'
 import portfinder from 'portfinder'
 
 // 🚀 构建函数，让你的油猴脚本起飞！
@@ -85,34 +85,17 @@ export async function build(
         console.log(`👀 Watching on ${targetFileURL}`)
     }
 
-    // 🎁 安装脚本的过程就像是向用户赠送一份精心准备的礼物。
-    installScript: {
-        // 🌐 创建一个临时的 HTML 文件，作为脚本安装的启动器。这就像是准备一张邀请函，邀请用户体验我们的脚本。
-        const tmpFilePath = path.join(finalOutdir, fileName + '.html')
+    installScript(dev ? proxyFileURL : targetFileURL)
 
-        // ✍️ 写入 HTML 内容。这段简单的脚本会引导浏览器自动打开并安装我们的油猴脚本，就像魔法一样！
-        const htmlContent = `<script>location.href = '${
-            dev ? proxyFileURL : targetFileURL
-        }'; window.close()</script>`
-        await fs.writeFile(tmpFilePath, htmlContent)
-
-        // 🚀 打开这个临时 HTML 文件，开始安装过程。这就像按下启动按钮，开始我们的脚本安装之旅。
-        await open(tmpFilePath)
-
-        // ⏱️ 给系统一点时间处理文件，就像沏一壶好茶静静等待其慢慢酝酿。
-        await new Promise(resolve => {
-            setTimeout(async () => {
-                // 🧹 安装完毕后，清理临时文件，保持我们的环境整洁如新。
-                await fs.unlink(tmpFilePath)
-
-                // 💥 当我们不在开发模式下，就给系统来一个小小的“停机震撼”，优雅地退出进程。
-                if (!dev) {
-                    // Mission completed!
-                    process.exit(0)
-                }
-            }, 2000)
-        })
-    }
+    await new Promise(resolve => {
+        setTimeout(async () => {
+            // 💥 当我们不在开发模式下，就给系统来一个小小的“停机震撼”，优雅地退出进程。
+            if (!dev) {
+                // Mission completed!
+                process.exit(0)
+            }
+        }, 2000)
+    })
 }
 
 // 🧙‍♂️ 使用一点黑魔法来获取调用者文件的路径，但别忘了，魔法总是神秘莫测哒！
@@ -205,4 +188,16 @@ ${
 }
 })()
 `
+}
+
+function installScript(url) {
+    const htmlContent = `<script>location.href = '${url}'; window.close()</script>`
+
+    const base64Content = Buffer.from(htmlContent).toString('base64')
+
+    const dataUrl = `data:text/html;base64,${base64Content}`
+
+    return open(dataUrl, {
+        app: { name: apps.browser },
+    })
 }
