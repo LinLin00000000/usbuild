@@ -85,7 +85,7 @@ export async function build(
         console.log(`👀 Watching on ${targetFileURL}`)
     }
 
-    installScript(dev ? proxyFileURL : targetFileURL)
+    await installScript(dev ? proxyFileURL : targetFileURL)
 
     await new Promise(resolve => {
         setTimeout(async () => {
