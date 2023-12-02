@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/LinLin00000000/usbuild/compare/v1.2.0...v1.3.0) (2023-12-02)
+
+
+### Features
+
+* 改进引用脚本的方式, 可以免去 usbuild 标记的麻烦啦 ([e4392bf](https://github.com/LinLin00000000/usbuild/commit/e4392bfd3cc8839990977e42523581753fc47c23))
+
 ## [1.2.0](https://github.com/LinLin00000000/usbuild/compare/v1.1.1...v1.2.0) (2023-12-02)
 
 
