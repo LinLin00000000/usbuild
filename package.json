@@ -1,6 +1,6 @@
 {
     "name": "@linlin00/usbuild",
-    "version": "1.1.1",
+    "version": "1.2.0",
     "description": "Grease Monkey Script (UserScript) build tool based on esbuild",
     "homepage": "https://github.com/LinLin00000000/usbuild",
     "type": "module",
