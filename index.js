@@ -1,5 +1,6 @@
 import path from 'path'
 import open from 'open'
+import fsSync from 'fs'
 import fs from 'fs/promises'
 import esbuild from 'esbuild'
 import portfinder from 'portfinder'
@@ -23,6 +24,9 @@ export async function build(
 
     // 🏠 确定最终的输出目录，给我们的脚本一个温馨的家。
     const finalOutdir = path.join(fileDir, outdir)
+    if (!fsSync.existsSync(finalOutdir)) {
+        fsSync.mkdirSync(finalOutdir)
+    }
 
     // 📦 配置 esbuild，让你的代码像魔法一样自动转化并打包。
     const ctx = await esbuild.context({
