@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/LinLin00000000/usbuild/compare/v1.1.1...v1.2.0) (2023-12-02)
+
+
+### Features
+
+* 增加实时热重载的功能 ([830a057](https://github.com/LinLin00000000/usbuild/commit/830a0572c1baa696c43c714616359144ed783ada))
+
 ## [1.1.1](https://github.com/LinLin00000000/usbuild/compare/v1.1.0...v1.1.1) (2023-12-02)
 
 
