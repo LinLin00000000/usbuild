@@ -64,6 +64,8 @@ export async function build(
 
     const targetFileURL = baseURL + targetFileName
     const proxyFileURL = baseURL + proxyFileName
+
+    // See https://esbuild.github.io/api/#live-reload
     const eventSourceURL = baseURL + 'esbuild'
 
     // 🔍 如果是开发模式，我们会像侦探一样密切关注代码的每一个变化。
