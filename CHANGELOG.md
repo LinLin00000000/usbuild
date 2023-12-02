@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.1](https://github.com/LinLin00000000/usbuild/compare/v1.1.0...v1.1.1) (2023-12-02)
+
+
+### Bug Fixes
+
+* 修复 dev 模式下可能的 no such file or directory 问题 ([4f09a64](https://github.com/LinLin00000000/usbuild/commit/4f09a64d29b5815a930873d95c3f4ab8e3d93b72))
+
 ## [1.1.0](https://github.com/LinLin00000000/usbuild/compare/v1.0.2...v1.1.0) (2023-12-01)
 
 
