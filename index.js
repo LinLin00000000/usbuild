@@ -4,6 +4,10 @@ import esbuild from 'esbuild'
 import open, { apps } from 'open'
 import portfinder from 'portfinder'
 
+// 因为要运行源文件, 但是油猴脚本在浏览器运行, 有很多 node 没有的 API
+// 为了避免报错, 这里直接忽视了所有外部调用的错误, 但本文件产生的错误还是会正常抛出并打印的
+ignoreAllErrors()
+
 // 🚀 构建函数，让你的油猴脚本起飞！
 export async function build(
     userScriptConfig = {},
@@ -42,7 +46,8 @@ export async function build(
         banner: {
             js: userScriptMetaData,
         },
-        dropLabels: ['usbuild'],
+        dropLabels: ['usbuild'], // 因为历史原因暂时保留
+        plugins: [ignoreSelfPlugin],
     })
 
     await ctx.watch()
@@ -204,4 +209,30 @@ function installScript(url) {
     return open(dataUrl, {
         app: { name: apps.browser },
     })
+}
+
+const ignoreSelfPlugin = {
+    name: 'ignoreSelfPlugin',
+    setup(build) {
+        const tip = '这是力量的代价，不可避免 '
+        build.onResolve({ filter: /usbuild$/ }, args => {
+            return {
+                path: ')',
+                namespace: tip,
+            }
+        })
+
+        build.onLoad({ filter: /^\)$/, namespace: tip }, () => {
+            return {
+                contents: `function __usbuild(){} export { __usbuild as build }`,
+                loader: 'js',
+            }
+        })
+    },
+}
+
+function ignoreAllErrors() {
+    const handle = () => {}
+    process.on('uncaughtException', handle)
+    process.on('unhandledRejection', handle)
 }
