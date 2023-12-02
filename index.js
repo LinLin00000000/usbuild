@@ -69,7 +69,7 @@ export async function build(
         // ✍️ 将这个精心准备的中间脚本写入文件，就像在一个神秘的卷轴上写下了古老的咒语。
         await fs.writeFile(metaFilePath, metaContent)
 
-        console.log('👀 watching...')
+        console.log(`👀 Watching on ${fileURL}`)
     } else {
         // 🚚 在非开发模式下，我们一举完成构建，一切都准备就绪！
         console.log('🚀 building...')
