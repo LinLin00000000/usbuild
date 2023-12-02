@@ -27,6 +27,8 @@ export async function build(
 
     userScriptConfig.version = userScriptConfig.version ?? '0.1.0'
 
+    const userScriptMetaData = bannerBuilder(userScriptConfig)
+
     // 🏠 确定最终的输出目录，给我们的脚本一个温馨的家。
     const finalOutdir = path.join(fileDir, outdir)
 
@@ -38,16 +40,16 @@ export async function build(
         charset: 'utf8',
         outExtension: { '.js': '.user.js' },
         banner: {
-            js: bannerBuilder(userScriptConfig),
+            js: userScriptMetaData,
         },
         dropLabels: ['usbuild'],
     })
 
-    // 🕵️‍♂️ 我们用 portfinder 来获取一个可用的端口，就像找到一个没有人使用的秘密通道。
-    const finalPort = await portfinder.getPortPromise({ port })
-
     await ctx.watch()
     console.log('🌈 build done!')
+
+    // 🕵️‍♂️ 我们用 portfinder 来获取一个可用的端口，就像找到一个没有人使用的秘密通道。
+    const finalPort = await portfinder.getPortPromise({ port })
 
     // 🌍 我们让 esbuild 服务启动起来，在这个新发现的端口上展开我们的小世界。
     await ctx.serve({
@@ -73,14 +75,14 @@ export async function build(
          * 每当你的源文件有所变动，只需要让你的浏览器做个伸展操般的刷新，变化就会立刻展现在你眼前，就像变魔术一样神奇又有趣！
          */
 
-        const metaContent =
-            bannerBuilder(userScriptConfig) +
+        const proxyScriptContent =
+            userScriptMetaData +
             proxyScript(targetFileURL, autoReload, eventSourceURL)
 
-        const metaFilePath = path.join(finalOutdir, proxyFileName)
+        const proxyScriptFilePath = path.join(finalOutdir, proxyFileName)
 
         // ✍️ 将这个精心准备的中间脚本写入文件，就像在一个神秘的卷轴上写下了古老的咒语。
-        await fs.writeFile(metaFilePath, metaContent)
+        await fs.writeFile(proxyScriptFilePath, proxyScriptContent)
 
         console.log(`👀 Watching on ${targetFileURL}`)
     }
