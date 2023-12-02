@@ -1,6 +1,5 @@
 import path from 'path'
 import open from 'open'
-import fsSync from 'fs'
 import fs from 'fs/promises'
 import esbuild from 'esbuild'
 import portfinder from 'portfinder'
@@ -8,7 +7,13 @@ import portfinder from 'portfinder'
 // 🚀 构建函数，让你的油猴脚本起飞！
 export async function build(
     userScriptConfig = {},
-    { dev = false, outdir = 'dist', host = '127.0.0.1', port = 7100 } = {}
+    {
+        dev = false,
+        outdir = 'dist',
+        host = '127.0.0.1',
+        port = 7100,
+        autoReload = true,
+    } = {}
 ) {
     // 🌟 获取调用这个函数的文件的路径，就像一名神秘的探险家寻找宝藏地图。
     const filePath = getCallerFilePath()
@@ -24,9 +29,6 @@ export async function build(
 
     // 🏠 确定最终的输出目录，给我们的脚本一个温馨的家。
     const finalOutdir = path.join(fileDir, outdir)
-    if (!fsSync.existsSync(finalOutdir)) {
-        fsSync.mkdirSync(finalOutdir)
-    }
 
     // 📦 配置 esbuild，让你的代码像魔法一样自动转化并打包。
     const ctx = await esbuild.context({
@@ -44,12 +46,23 @@ export async function build(
     // 🕵️‍♂️ 我们用 portfinder 来获取一个可用的端口，就像找到一个没有人使用的秘密通道。
     const finalPort = await portfinder.getPortPromise({ port })
 
+    await ctx.watch()
+    console.log('🌈 build done!')
+
     // 🌍 我们让 esbuild 服务启动起来，在这个新发现的端口上展开我们的小世界。
     await ctx.serve({
         host,
         port: finalPort,
         servedir: finalOutdir,
     })
+
+    const baseURL = `http://${host}:${finalPort}/`
+    const targetFileName = fileName + '.user.js'
+    const proxyFileName = fileName + '.meta.user.js'
+
+    const targetFileURL = baseURL + targetFileName
+    const proxyFileURL = baseURL + proxyFileName
+    const eventSourceURL = baseURL + 'esbuild'
 
     // 🔍 如果是开发模式，我们会像侦探一样密切关注代码的每一个变化。
     if (dev) {
@@ -60,34 +73,27 @@ export async function build(
          * 每当你的源文件有所变动，只需要让你的浏览器做个伸展操般的刷新，变化就会立刻展现在你眼前，就像变魔术一样神奇又有趣！
          */
 
-        const fileURL = `http://${host}:${finalPort}/${fileName}.user.js`
         const metaContent =
-            bannerBuilder(userScriptConfig) + insertScript(fileURL)
+            bannerBuilder(userScriptConfig) +
+            proxyScript(targetFileURL, autoReload, eventSourceURL)
 
-        const metaFilePath = path.join(finalOutdir, fileName + '.meta.user.js')
+        const metaFilePath = path.join(finalOutdir, proxyFileName)
 
         // ✍️ 将这个精心准备的中间脚本写入文件，就像在一个神秘的卷轴上写下了古老的咒语。
         await fs.writeFile(metaFilePath, metaContent)
 
-        console.log(`👀 Watching on ${fileURL}`)
-    } else {
-        // 🚚 在非开发模式下，我们一举完成构建，一切都准备就绪！
-        console.log('🚀 building...')
-        await ctx.rebuild()
-        console.log('🌈 build done!')
+        console.log(`👀 Watching on ${targetFileURL}`)
     }
 
     // 🎁 安装脚本的过程就像是向用户赠送一份精心准备的礼物。
     installScript: {
-        // 📄 首先，确定最终脚本的文件名。如果是开发模式，我们使用带有“.meta.user.js”的中间文件。
-        const outScriptFileName =
-            fileName + (dev ? '.meta.user.js' : '.user.js')
-
-        // 🌐 接着，创建一个临时的 HTML 文件，作为脚本安装的启动器。这就像是准备一张邀请函，邀请用户体验我们的脚本。
+        // 🌐 创建一个临时的 HTML 文件，作为脚本安装的启动器。这就像是准备一张邀请函，邀请用户体验我们的脚本。
         const tmpFilePath = path.join(finalOutdir, fileName + '.html')
 
-        // ✍️ 然后，写入 HTML 内容。这段简单的脚本会引导浏览器自动打开并安装我们的油猴脚本，就像魔法一样！
-        const htmlContent = `<script>location.href = 'http://${host}:${finalPort}/${outScriptFileName}'; window.close()</script>`
+        // ✍️ 写入 HTML 内容。这段简单的脚本会引导浏览器自动打开并安装我们的油猴脚本，就像魔法一样！
+        const htmlContent = `<script>location.href = '${
+            dev ? proxyFileURL : targetFileURL
+        }'; window.close()</script>`
         await fs.writeFile(tmpFilePath, htmlContent)
 
         // 🚀 打开这个临时 HTML 文件，开始安装过程。这就像按下启动按钮，开始我们的脚本安装之旅。
@@ -176,7 +182,7 @@ function isEmptyString(str) {
     return isNil(str) || str === ''
 }
 
-function insertScript(src) {
+function proxyScript(src, autoReload, eventSourceURL) {
     return `
 
 ;(() => {
@@ -191,6 +197,12 @@ const head = document.head
 
 // 🚀 将 script 元素插入到 head 的最前端，确保它是第一个被执行的脚本，就像是开场的第一幕。
 head.insertBefore(script, head.firstChild)
+
+${
+    autoReload
+        ? `new EventSource('${eventSourceURL}').addEventListener('change', () => location.reload());`
+        : ''
+}
 })()
 `
 }
