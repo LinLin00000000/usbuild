@@ -1,12 +1,10 @@
 import path from 'path'
-import fs from 'fs/promises'
+import fs from 'fs'
 import esbuild from 'esbuild'
 import open, { apps } from 'open'
 import portfinder from 'portfinder'
-
-// 因为要运行源文件, 但是油猴脚本在浏览器运行, 有很多 node 没有的 API
-// 为了避免报错, 这里直接忽视了所有外部调用的错误, 但本文件产生的错误还是会正常抛出并打印的
-ignoreAllErrors()
+import chokidar from 'chokidar'
+import babel from '@babel/core'
 
 // 🚀 构建函数，让你的油猴脚本起飞！
 export async function build(
@@ -23,7 +21,11 @@ export async function build(
     const filePath = getCallerFilePath()
 
     // 🧭 分析文件路径，提取出文件名和目录，就像解开一个古老的谜题。
-    const { name: fileName, dir: fileDir } = path.parse(filePath)
+    const {
+        name: fileName,
+        dir: fileDir,
+        base: fileFullName,
+    } = path.parse(filePath)
 
     // 📝 如果用户没有指定脚本名，我们就从文件名中获取，就像从石头中雕刻出雕像。
     userScriptConfig.name =
@@ -36,9 +38,20 @@ export async function build(
     // 🏠 确定最终的输出目录，给我们的脚本一个温馨的家。
     const finalOutdir = path.join(fileDir, outdir)
 
+    if (!fs.existsSync(finalOutdir)) {
+        fs.mkdirSync(finalOutdir)
+    }
+
+    const babelTransformOutPath = path.join(finalOutdir, fileFullName)
+
+    const babelTransform = () =>
+        removeImportUsbuild(filePath, babelTransformOutPath)
+
+    babelTransform()
+
     // 📦 配置 esbuild，让你的代码像魔法一样自动转化并打包。
     const ctx = await esbuild.context({
-        entryPoints: [filePath],
+        entryPoints: [babelTransformOutPath],
         bundle: true,
         outdir: finalOutdir,
         charset: 'utf8',
@@ -47,31 +60,18 @@ export async function build(
             js: userScriptMetaData,
         },
         dropLabels: ['usbuild'], // 因为历史原因暂时保留
-        plugins: [ignoreSelfPlugin],
+        plugins: [changeBaseDirPlugin(finalOutdir, fileDir)],
     })
-
-    await ctx.watch()
-    console.log('🌈 build done!')
 
     // 🕵️‍♂️ 我们用 portfinder 来获取一个可用的端口，就像找到一个没有人使用的秘密通道。
     const finalPort = await portfinder.getPortPromise({ port })
 
-    // 🌍 我们让 esbuild 服务启动起来，在这个新发现的端口上展开我们的小世界。
-    await ctx.serve({
-        host,
-        port: finalPort,
-        servedir: finalOutdir,
-    })
-
     const baseURL = `http://${host}:${finalPort}/`
     const targetFileName = fileName + '.user.js'
-    const proxyFileName = fileName + '.meta.user.js'
+    const proxyFileName = fileName + '.proxy.user.js'
 
     const targetFileURL = baseURL + targetFileName
     const proxyFileURL = baseURL + proxyFileName
-
-    // See https://esbuild.github.io/api/#live-reload
-    const eventSourceURL = baseURL + 'esbuild'
 
     // 🔍 如果是开发模式，我们会像侦探一样密切关注代码的每一个变化。
     if (dev) {
@@ -82,6 +82,12 @@ export async function build(
          * 每当你的源文件有所变动，只需要让你的浏览器做个伸展操般的刷新，变化就会立刻展现在你眼前，就像变魔术一样神奇又有趣！
          */
 
+        await ctx.watch()
+        chokidar.watch(filePath).on('change', babelTransform)
+
+        // 自动刷新的来源, See https://esbuild.github.io/api/#live-reload
+        const eventSourceURL = baseURL + 'esbuild'
+
         const proxyScriptContent =
             userScriptMetaData +
             proxyScript(targetFileURL, autoReload, eventSourceURL)
@@ -89,14 +95,26 @@ export async function build(
         const proxyScriptFilePath = path.join(finalOutdir, proxyFileName)
 
         // ✍️ 将这个精心准备的中间脚本写入文件，就像在一个神秘的卷轴上写下了古老的咒语。
-        await fs.writeFile(proxyScriptFilePath, proxyScriptContent)
+        fs.writeFileSync(proxyScriptFilePath, proxyScriptContent)
 
         console.log(`👀 Watching on ${targetFileURL}`)
+    } else {
+        // 🚚 在非开发模式下，我们一举完成构建，一切都准备就绪！
+        console.log('🚀 building...')
+        await ctx.rebuild()
+        console.log('🌈 build done!')
     }
+
+    // 🌍 我们让 esbuild 服务启动起来，在这个新发现的端口上展开我们的小世界。
+    await ctx.serve({
+        host,
+        port: finalPort,
+        servedir: finalOutdir,
+    })
 
     await installScript(dev ? proxyFileURL : targetFileURL)
 
-    await new Promise(resolve => {
+    return new Promise(resolve => {
         setTimeout(async () => {
             // 💥 当我们不在开发模式下，就给系统来一个小小的“停机震撼”，优雅地退出进程。
             if (!dev) {
@@ -211,28 +229,51 @@ function installScript(url) {
     })
 }
 
-const ignoreSelfPlugin = {
-    name: 'ignoreSelfPlugin',
+const changeBaseDirPlugin = (oldBaseDir, newBaseDir) => ({
+    name: 'changeBaseDirPlugin',
     setup(build) {
-        const tip = '这是力量的代价，不可避免 '
-        build.onResolve({ filter: /usbuild$/ }, args => {
-            return {
-                path: ')',
-                namespace: tip,
-            }
-        })
-
-        build.onLoad({ filter: /^\)$/, namespace: tip }, () => {
-            return {
-                contents: `function __usbuild(){} export { __usbuild as build }`,
-                loader: 'js',
+        build.onResolve({ filter: /^\.\.?\// }, args => {
+            if (args.resolveDir === oldBaseDir) {
+                const newPath = path.join(newBaseDir, args.path)
+                return {
+                    path: newPath,
+                }
             }
         })
     },
+})
+
+function removeImportUsbuild(inputPath, outputPath) {
+    const { code } = babel.transformFileSync(inputPath, {
+        plugins: [removeImportUsbuildPlugin],
+    })
+
+    // 将转换后的代码写入新文件
+    fs.writeFileSync(outputPath, code)
 }
 
-function ignoreAllErrors() {
-    const handle = () => {}
-    process.on('uncaughtException', handle)
-    process.on('unhandledRejection', handle)
+function removeImportUsbuildPlugin({ types: t }) {
+    return {
+        visitor: {
+            ImportDeclaration(path) {
+                if (path.node.source.value.match(/usbuild$/)) {
+                    const names = path.node.specifiers.map(
+                        specifier => specifier.local.name
+                    )
+                    this.importedNames = new Set(names)
+                    path.remove()
+                }
+            },
+            AwaitExpression(path) {
+                const callExpression = path.node.argument
+                const calleeName = callExpression.callee.name
+                if (
+                    t.isCallExpression(callExpression) &&
+                    this.importedNames.has(calleeName)
+                ) {
+                    path.remove()
+                }
+            },
+        },
+    }
 }
