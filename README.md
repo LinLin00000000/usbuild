@@ -23,7 +23,9 @@ npm i -D @linlin00/usbuild
 // ⚒️ 脚本一写完，跑一下这个文件，咱们的构建就大功告成了！
 
 import { build } from '@linlin00/usbuild'
-build(
+
+// 🚦 别忘了 await 关键词，它就像个红绿灯，让程序乖乖等待，防止冲到浏览器专属函数（比如 alert）那边去，引发一阵混乱。
+await build(
     {
         // 🎭 第一个参数是你的 UserScript 配置，就像给你的脚本穿上华丽的戏服。详情可瞄一眼 https://www.tampermonkey.net/documentation.php
         // 🔑 配置的键名是字段名，值可以是潇洒的字符串，或者是风趣的字符串数组。
