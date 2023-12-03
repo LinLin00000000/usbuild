@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.0](https://github.com/LinLin00000000/usbuild/compare/v1.3.0...v1.4.0) (2023-12-03)
+
+
+### Features
+
+* 改用使用 babel 删除调用 usbuild 的语句 ([257dbb5](https://github.com/LinLin00000000/usbuild/commit/257dbb5f67e90ea6ab17a61c82139b39124a136e))
+
 ## [1.3.0](https://github.com/LinLin00000000/usbuild/compare/v1.2.0...v1.3.0) (2023-12-02)
 
 
