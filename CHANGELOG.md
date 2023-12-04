@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.0](https://github.com/LinLin00000000/usbuild/compare/v1.4.0...v1.5.0) (2023-12-04)
+
+
+### Features
+
+* **removeImportUsbuildPlugin:** 优化 babel 移除 usbuild 相关语句的流程 ([02d54a0](https://github.com/LinLin00000000/usbuild/commit/02d54a0fe32a3613fff5d2155c8e0153e6a70e12))
+
 ## [1.4.0](https://github.com/LinLin00000000/usbuild/compare/v1.3.0...v1.4.0) (2023-12-03)
 
 
