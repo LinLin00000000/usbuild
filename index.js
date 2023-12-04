@@ -3,7 +3,6 @@ import fs from 'fs'
 import esbuild from 'esbuild'
 import open, { apps } from 'open'
 import portfinder from 'portfinder'
-import chokidar from 'chokidar'
 import babel from '@babel/core'
 
 // 🚀 构建函数，让你的油猴脚本起飞！
@@ -21,11 +20,7 @@ export async function build(
     const filePath = getCallerFilePath()
 
     // 🧭 分析文件路径，提取出文件名和目录，就像解开一个古老的谜题。
-    const {
-        name: fileName,
-        dir: fileDir,
-        base: fileFullName,
-    } = path.parse(filePath)
+    const { name: fileName, dir: fileDir } = path.parse(filePath)
 
     // 📝 如果用户没有指定脚本名，我们就从文件名中获取，就像从石头中雕刻出雕像。
     userScriptConfig.name =
@@ -42,16 +37,9 @@ export async function build(
         fs.mkdirSync(finalOutdir)
     }
 
-    const babelTransformOutPath = path.join(finalOutdir, fileFullName)
-
-    const babelTransform = () =>
-        removeImportUsbuild(filePath, babelTransformOutPath)
-
-    babelTransform()
-
     // 📦 配置 esbuild，让你的代码像魔法一样自动转化并打包。
     const ctx = await esbuild.context({
-        entryPoints: [babelTransformOutPath],
+        entryPoints: [filePath],
         bundle: true,
         outdir: finalOutdir,
         charset: 'utf8',
@@ -60,7 +48,7 @@ export async function build(
             js: userScriptMetaData,
         },
         dropLabels: ['usbuild'], // 因为历史原因暂时保留
-        plugins: [changeBaseDirPlugin(finalOutdir, fileDir)],
+        plugins: [removeImportUsbuildPlugin(filePath)],
     })
 
     // 🕵️‍♂️ 我们用 portfinder 来获取一个可用的端口，就像找到一个没有人使用的秘密通道。
@@ -83,7 +71,6 @@ export async function build(
          */
 
         await ctx.watch()
-        chokidar.watch(filePath).on('change', babelTransform)
 
         // 自动刷新的来源, See https://esbuild.github.io/api/#live-reload
         const eventSourceURL = baseURL + 'esbuild'
@@ -229,30 +216,44 @@ function installScript(url) {
     })
 }
 
-const changeBaseDirPlugin = (oldBaseDir, newBaseDir) => ({
-    name: 'changeBaseDirPlugin',
-    setup(build) {
-        build.onResolve({ filter: /^\.\.?\// }, args => {
-            if (args.resolveDir === oldBaseDir) {
-                const newPath = path.join(newBaseDir, args.path)
-                return {
-                    path: newPath,
+const removeImportUsbuildPlugin = entryPoint => {
+    return {
+        name: 'removeImportUsbuild',
+        setup(build) {
+            const { base, dir } = path.parse(entryPoint)
+            const namespace = base + ' '
+            const cache = {}
+
+            build.onResolve({ filter: /.*/ }, args => {
+                if (args.kind === 'entry-point') {
+                    return {
+                        namespace,
+                        path: ')',
+                        watchFiles: [entryPoint],
+                    }
                 }
-            }
-        })
-    },
-})
+            })
+            build.onLoad({ filter: /.*/, namespace }, args => {
+                const input = fs.readFileSync(entryPoint, 'utf8')
+                const value = cache[entryPoint]
 
-function removeImportUsbuild(inputPath, outputPath) {
-    const { code } = babel.transformFileSync(inputPath, {
-        plugins: [removeImportUsbuildPlugin],
-    })
+                if (!value || value.input !== input) {
+                    const { code } = babel.transformSync(input, {
+                        plugins: [babelPluginRemoveImportUsbuild],
+                    })
+                    cache[entryPoint] = { input, output: code }
+                }
 
-    // 将转换后的代码写入新文件
-    fs.writeFileSync(outputPath, code)
+                return {
+                    resolveDir: dir,
+                    contents: cache[entryPoint].output,
+                }
+            })
+        },
+    }
 }
 
-function removeImportUsbuildPlugin({ types: t }) {
+function babelPluginRemoveImportUsbuild({ types: t }) {
     return {
         visitor: {
             ImportDeclaration(path) {

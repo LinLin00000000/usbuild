@@ -29,7 +29,6 @@
     },
     "dependencies": {
         "@babel/core": "^7.23.5",
-        "chokidar": "^3.5.3",
         "esbuild": "^0.19.8",
         "open": "^9.1.0",
         "portfinder": "^1.0.32"
