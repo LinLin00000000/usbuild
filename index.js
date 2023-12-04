@@ -24,10 +24,7 @@ export async function build(
 
     // 📝 如果用户没有指定脚本名，我们就从文件名中获取，就像从石头中雕刻出雕像。
     userScriptConfig.name ??= fileName.replace(/[-_]/g, ' ')
-
     userScriptConfig.version ??= '0.1.0'
-
-    const userScriptMetaData = bannerBuilder(userScriptConfig)
 
     // 🏠 确定最终的输出目录，给我们的脚本一个温馨的家。
     const finalOutdir = path.join(fileDir, outdir)
@@ -37,18 +34,15 @@ export async function build(
     }
 
     // 📦 配置 esbuild，让你的代码像魔法一样自动转化并打包。
-    const ctx = await esbuild.context({
+    const esbuildOptions = {
         entryPoints: [filePath],
         bundle: true,
         outdir: finalOutdir,
         charset: 'utf8',
         outExtension: { '.js': '.user.js' },
-        banner: {
-            js: userScriptMetaData,
-        },
         dropLabels: ['usbuild'], // 因为历史原因暂时保留
         plugins: [esbuildPluginRemoveImportUsbuild(filePath)],
-    })
+    }
 
     // 🕵️‍♂️ 我们用 portfinder 来获取一个可用的端口，就像找到一个没有人使用的秘密通道。
     const finalPort = await portfinder.getPortPromise({ port })
@@ -60,6 +54,8 @@ export async function build(
     const targetFileURL = baseURL + targetFileName
     const proxyFileURL = baseURL + proxyFileName
 
+    let ctx
+
     // 🔍 如果是开发模式，我们会像侦探一样密切关注代码的每一个变化。
     if (dev) {
         /**
@@ -69,13 +65,19 @@ export async function build(
          * 每当你的源文件有所变动，只需要让你的浏览器做个伸展操般的刷新，变化就会立刻展现在你眼前，就像变魔术一样神奇又有趣！
          */
 
+        ctx = await esbuild.context(esbuildOptions)
         await ctx.watch()
 
         // 自动刷新的来源, See https://esbuild.github.io/api/#live-reload
         const eventSourceURL = baseURL + 'esbuild'
 
+        // 开发模式下默认申请所有权限
+        userScriptConfig.grant = unique(
+            mergeArrays(userScriptConfig.grant, grantFunctions)
+        )
+
         const proxyScriptContent =
-            userScriptMetaData +
+            bannerBuilder(userScriptConfig) +
             proxyScript(targetFileURL, autoReload, eventSourceURL)
 
         const proxyScriptFilePath = path.join(finalOutdir, proxyFileName)
@@ -87,7 +89,23 @@ export async function build(
     } else {
         // 🚚 在非开发模式下，我们一举完成构建，一切都准备就绪！
         console.log('🚀 building...')
+        ctx = await esbuild.context({ ...esbuildOptions, outExtension: {} })
         await ctx.rebuild()
+
+        const codeFilePath = path.join(finalOutdir, fileName + '.js')
+        const code = fs.readFileSync(codeFilePath, 'utf-8')
+
+        const detectedGrant = detectGrantFunctions(code, grantFunctions)
+
+        userScriptConfig.grant = unique(
+            mergeArrays(userScriptConfig.grant, detectedGrant)
+        )
+
+        const finalContent = bannerBuilder(userScriptConfig) + code
+        const finalFilePath = path.join(finalOutdir, targetFileName)
+
+        fs.writeFileSync(finalFilePath, finalContent)
+
         console.log('🌈 build done!')
     }
 
@@ -110,6 +128,37 @@ export async function build(
         }, 2000)
     })
 }
+
+const grantFunctions = [
+    'unsafeWindow',
+    'window.close',
+    'window.focus',
+    'window.onurlchange',
+    'GM_addStyle',
+    'GM_addElement',
+    'GM_deleteValue',
+    'GM_listValues',
+    'GM_addValueChangeListener',
+    'GM_removeValueChangeListener',
+    'GM_setValue',
+    'GM_getValue',
+    'GM_log',
+    'GM_getResourceText',
+    'GM_getResourceURL',
+    'GM_registerMenuCommand',
+    'GM_unregisterMenuCommand',
+    'GM_openInTab',
+    'GM_xmlhttpRequest',
+    'GM_download',
+    'GM_getTab',
+    'GM_saveTab',
+    'GM_getTabs',
+    'GM_notification',
+    'GM_setClipboard',
+    'GM_info',
+    'GM_cookie',
+    'GM_webRequest',
+]
 
 // 🧙‍♂️ 使用一点黑魔法来获取调用者文件的路径，但别忘了，魔法总是神秘莫测哒！
 function getCallerFilePath() {
@@ -165,7 +214,7 @@ function bannerBuilder(config) {
     // 📜 组合头部和尾部注释，完成这部 UserScript 的序幕。
     const header = `// ==UserScript==`
     const footer = `// ==/UserScript==`
-    return [header, ...fields, footer].join(separator)
+    return [header, ...fields, footer, ''].join(separator)
 }
 
 // 🤔 检查一个值是否为空，就像是探索一个神秘空间是否有宝藏。
@@ -178,28 +227,53 @@ function isEmptyString(str) {
     return isNil(str) || str === ''
 }
 
+/**
+ * 合并多个数组或单个元素。
+ * @param {...(Array|Object)} xs - 任意数量的数组或单个元素。
+ * @returns {Array} 合并后的数组。
+ */
+function mergeArrays(...xs) {
+    return [].concat(...xs.map(x => (Array.isArray(x) ? x : x ? [x] : [])))
+}
+
+/**
+ * 从任何可迭代对象中移除重复项并返回一个新的数组。
+ * @template T - 可迭代对象中元素的类型。
+ * @param {Iterable<T>} iterable - 任何可迭代对象。
+ * @returns {T[]} 去重后的数组。
+ */
+function unique(iterable) {
+    return [...new Set(iterable)]
+}
+
 function proxyScript(src, autoReload, eventSourceURL) {
     return `
 
-;(() => {
+try {
+${['GM']
+    .concat(grantFunctions.filter(name => !name.includes('.')))
+    .map(f => `unsafeWindow.${f} = ${f};`)
+    .join('\n')}
+} catch {}
+
 // 🎭 创建一个崭新的 script 元素，就像是在舞台上准备一个新的表演道具。
-const script = document.createElement('script')
+const script = document.createElement('script');
 
 // 🌐 设置 script 元素的源文件。这里我们将使用 '${src}' 作为我们神秘脚本的来源。
-script.src = '${src}'
+script.src = '${src}';
 
 // 🕵️‍♂️ 获取文档的 head 元素，就像是找到了控制整个页面的大脑。
-const head = document.head
+const head = document.head;
 
 // 🚀 将 script 元素插入到 head 的最前端，确保它是第一个被执行的脚本，就像是开场的第一幕。
-head.insertBefore(script, head.firstChild)
+head.insertBefore(script, head.firstChild);
 
 ${
     autoReload
         ? `new EventSource('${eventSourceURL}').addEventListener('change', () => location.reload());`
         : ''
 }
-})()
+
 `
 }
 
@@ -276,5 +350,41 @@ function babelPluginRemoveImportUsbuild({ types: t }) {
                 }
             },
         },
+    }
+}
+
+function detectGrantFunctions(code, functions) {
+    const babelPluginDetectGrantFunctionsName = 'detect-grant-functions'
+    const { metadata } = babel.transformSync(code, {
+        plugins: [babelPluginDetectGrantFunctions(functions)],
+    })
+
+    return metadata[babelPluginDetectGrantFunctionsName]
+
+    function babelPluginDetectGrantFunctions(functionNamesArray) {
+        const functionNamesSet = new Set(functionNamesArray)
+        const detectedFunctions = new Set()
+        function check(s) {
+            if (functionNamesSet.has(s)) {
+                detectedFunctions.add(s)
+            }
+        }
+
+        return {
+            name: babelPluginDetectGrantFunctionsName,
+            visitor: {
+                Identifier(path) {
+                    check(path.node.name)
+                },
+                MemberExpression(path) {
+                    const memberName = `${path.node.object.name}.${path.node.property.name}`
+                    check(memberName)
+                },
+            },
+            post(state) {
+                state.metadata[babelPluginDetectGrantFunctionsName] =
+                    Array.from(detectedFunctions)
+            },
+        }
     }
 }
