@@ -23,10 +23,9 @@ export async function build(
     const { name: fileName, dir: fileDir } = path.parse(filePath)
 
     // 📝 如果用户没有指定脚本名，我们就从文件名中获取，就像从石头中雕刻出雕像。
-    userScriptConfig.name =
-        userScriptConfig.name ?? fileName.replace(/[-_]/g, ' ')
+    userScriptConfig.name ??= fileName.replace(/[-_]/g, ' ')
 
-    userScriptConfig.version = userScriptConfig.version ?? '0.1.0'
+    userScriptConfig.version ??= '0.1.0'
 
     const userScriptMetaData = bannerBuilder(userScriptConfig)
 
@@ -48,7 +47,7 @@ export async function build(
             js: userScriptMetaData,
         },
         dropLabels: ['usbuild'], // 因为历史原因暂时保留
-        plugins: [removeImportUsbuildPlugin(filePath)],
+        plugins: [esbuildPluginRemoveImportUsbuild(filePath)],
     })
 
     // 🕵️‍♂️ 我们用 portfinder 来获取一个可用的端口，就像找到一个没有人使用的秘密通道。
@@ -216,7 +215,7 @@ function installScript(url) {
     })
 }
 
-const removeImportUsbuildPlugin = entryPoint => {
+function esbuildPluginRemoveImportUsbuild(entryPoint) {
     return {
         name: 'removeImportUsbuild',
         setup(build) {
