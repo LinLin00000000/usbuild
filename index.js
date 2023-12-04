@@ -258,9 +258,10 @@ function babelPluginRemoveImportUsbuild({ types: t }) {
         visitor: {
             ImportDeclaration(path) {
                 if (path.node.source.value.match(/usbuild$/)) {
-                    const names = path.node.specifiers.map(
-                        specifier => specifier.local.name
-                    )
+                    const names = path.node.specifiers
+                        .filter(t.isImportSpecifier)
+                        .map(specifier => specifier.local.name)
+
                     this.importedNames = new Set(names)
                     path.remove()
                 }
