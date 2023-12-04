@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.6.0](https://github.com/LinLin00000000/usbuild/compare/v1.5.0...v1.6.0) (2023-12-04)
+
+
+### Features
+
+* 支持 grant 属性自动生成 ([1f5d46e](https://github.com/LinLin00000000/usbuild/commit/1f5d46eae0013ec1963e5399569a61bc9332acfc))
+
+
+### Bug Fixes
+
+* 修复 dev 模式下 GM_API 无效的问题 ([1f5d46e](https://github.com/LinLin00000000/usbuild/commit/1f5d46eae0013ec1963e5399569a61bc9332acfc))
+
 ## [1.5.0](https://github.com/LinLin00000000/usbuild/compare/v1.4.0...v1.5.0) (2023-12-04)
 
 
