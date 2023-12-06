@@ -249,12 +249,11 @@ function unique(iterable) {
 function proxyScript(src, autoReload, eventSourceURL) {
     return `
 
-try {
-${['GM']
-    .concat(grantFunctions.filter(name => !name.includes('.')))
-    .map(f => `unsafeWindow.${f} = ${f};`)
+${grantFunctions
+    .filter(name => !name.includes('.'))
+    .concat('GM')
+    .map(f => `if(window.${f}) unsafeWindow.${f} = ${f};`)
     .join('\n')}
-} catch {}
 
 // 🎭 创建一个崭新的 script 元素，就像是在舞台上准备一个新的表演道具。
 const script = document.createElement('script');
