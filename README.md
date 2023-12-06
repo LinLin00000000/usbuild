@@ -1,11 +1,11 @@
 # usbuild
 
-🚀 一个基于 esbuild 的油猴脚本（UserScript）构建工具，让你的脚本开发像坐火箭一样快！
+🚀 一个基于 [esbuild](https://esbuild.github.io/) 的 [油猴](https://www.tampermonkey.net/) 脚本（UserScript）构建工具，让你的脚本开发像坐火箭一样快！
 
 ## Feature
 
-- 🧙‍♂️ 由代码自动变戏法般生成 UserScript 头部注释，再也不用头疼这些小细节啦！
-- 🔍 智能侦探！构建时自动检测代码中的 GM_API，神奇地生成 grant 属性，让配置变得智能又便捷。
+- 🧙‍♂️ 由代码自动变戏法般生成 UserScript [头部注释](https://www.tampermonkey.net/documentation.php)，再也不用头疼这些小细节啦！
+- 🔍 智能侦探！构建时自动检测代码中的 GM_API，神奇地生成 [grant](https://www.tampermonkey.net/documentation.php#meta:grant) 属性，让配置变得智能又便捷。
 - 🏠 本地开发，dev 模式就像个忍者，悄无声息地监听源文件变化，~~浏览器一刷新~~(加了热重载 feature，告别手动刷新的老旧时代)，脚本就灵活跳跃，无需烦恼反复安装。
 
 ## Install
@@ -52,7 +52,7 @@ const 超大声 = alert
 
 ```
 
-## 闲聊
+## Community
 
 💬 建了一个 QQ 交流群, 欢迎来玩QAQ
 
