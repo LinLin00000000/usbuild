@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.1](https://github.com/LinLin00000000/usbuild/compare/v1.7.0...v1.7.1) (2023-12-06)
+
+
+### Bug Fixes
+
+* 修复可能出现的 GM_API 未定义的问题 ([18d4bfe](https://github.com/LinLin00000000/usbuild/commit/18d4bfe5b40fe759506607febc78d24713f35567))
+
 ## [1.7.0](https://github.com/LinLin00000000/usbuild/compare/v1.6.0...v1.7.0) (2023-12-06)
 
 
