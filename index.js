@@ -44,7 +44,7 @@ export async function build(
         plugins: [esbuildPluginRemoveImportUsbuild(filePath)],
         format: 'esm',
         banner: {
-            js: '(async function () {\n',
+            js: '\n;(async function () {',
         },
         footer: {
             js: '\n})();',
@@ -227,16 +227,6 @@ function bannerBuilder(config) {
     return [header, ...fields, footer, ''].join(separator)
 }
 
-// 🤔 检查一个值是否为空，就像是探索一个神秘空间是否有宝藏。
-function isNil(value) {
-    return value === undefined || value === null
-}
-
-// 📃 判断字符串是否为空，就像是在寻找一个故事中的隐藏信息。
-function isEmptyString(str) {
-    return isNil(str) || str === ''
-}
-
 /**
  * 合并多个数组或单个元素。
  * @param {...(Array|Object)} xs - 任意数量的数组或单个元素。
@@ -334,32 +324,32 @@ function esbuildPluginRemoveImportUsbuild(entryPoint) {
             })
         },
     }
-}
 
-function babelPluginRemoveImportUsbuild({ types: t }) {
-    return {
-        visitor: {
-            ImportDeclaration(path) {
-                if (path.node.source.value.match(/usbuild$/)) {
-                    const names = path.node.specifiers
-                        .filter(t.isImportSpecifier)
-                        .map(specifier => specifier.local.name)
+    function babelPluginRemoveImportUsbuild({ types: t }) {
+        return {
+            visitor: {
+                ImportDeclaration(path) {
+                    if (path.node.source.value.match(/usbuild$/)) {
+                        const names = path.node.specifiers
+                            .filter(t.isImportSpecifier)
+                            .map(specifier => specifier.local.name)
 
-                    this.importedNames = new Set(names)
-                    path.remove()
-                }
+                        this.importedNames = new Set(names)
+                        path.remove()
+                    }
+                },
+                AwaitExpression(path) {
+                    const callExpression = path.node.argument
+                    const calleeName = callExpression.callee.name
+                    if (
+                        t.isCallExpression(callExpression) &&
+                        this.importedNames.has(calleeName)
+                    ) {
+                        path.remove()
+                    }
+                },
             },
-            AwaitExpression(path) {
-                const callExpression = path.node.argument
-                const calleeName = callExpression.callee.name
-                if (
-                    t.isCallExpression(callExpression) &&
-                    this.importedNames.has(calleeName)
-                ) {
-                    path.remove()
-                }
-            },
-        },
+        }
     }
 }
 
