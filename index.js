@@ -60,6 +60,8 @@ export async function build(
 
     const targetFileURL = baseURL + targetFileName
     const proxyFileURL = baseURL + proxyFileName
+    const targetFilePath = path.join(finalOutdir, targetFileName)
+    const proxyFilePath = path.join(finalOutdir, proxyFileName)
 
     let ctx
 
@@ -87,10 +89,8 @@ export async function build(
             bannerBuilder(userScriptConfig) +
             proxyScript(targetFileURL, autoReload, eventSourceURL)
 
-        const proxyScriptFilePath = path.join(finalOutdir, proxyFileName)
-
         // ✍️ 将这个精心准备的中间脚本写入文件，就像在一个神秘的卷轴上写下了古老的咒语。
-        fs.writeFileSync(proxyScriptFilePath, proxyScriptContent)
+        fs.writeFileSync(proxyFilePath, proxyScriptContent)
 
         console.log(`👀 Watching on ${targetFileURL}`)
     } else {
@@ -111,9 +111,8 @@ export async function build(
         )
 
         const finalContent = bannerBuilder(userScriptConfig) + code
-        const finalFilePath = path.join(finalOutdir, targetFileName)
 
-        fs.writeFileSync(finalFilePath, finalContent)
+        fs.writeFileSync(targetFilePath, finalContent)
 
         console.log('🌈 build done!')
     }
@@ -133,6 +132,8 @@ export async function build(
             if (!dev) {
                 // Mission completed!
                 process.exit(0)
+            } else {
+                fs.unlinkSync(proxyFilePath)
             }
         }, 2000)
     })
