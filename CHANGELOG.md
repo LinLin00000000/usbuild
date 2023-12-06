@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.0](https://github.com/LinLin00000000/usbuild/compare/v1.6.0...v1.7.0) (2023-12-06)
+
+
+### Features
+
+* 支持顶层 await ([7310870](https://github.com/LinLin00000000/usbuild/commit/7310870ed41e8c4ceeb248cd37fea670e19bc103))
+
 ## [1.6.0](https://github.com/LinLin00000000/usbuild/compare/v1.5.0...v1.6.0) (2023-12-04)
 
 
