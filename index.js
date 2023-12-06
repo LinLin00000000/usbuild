@@ -96,12 +96,14 @@ export async function build(
     } else {
         // 🚚 在非开发模式下，我们一举完成构建，一切都准备就绪！
         console.log('🚀 building...')
-        ctx = await esbuild.context({ ...esbuildOptions, outExtension: {} })
-        await ctx.rebuild()
+        ctx = await esbuild.context({
+            ...esbuildOptions,
+            outExtension: {},
+            write: false,
+        })
 
-        const codeFilePath = path.join(finalOutdir, fileName + '.js')
-        const code = fs.readFileSync(codeFilePath, 'utf-8')
-
+        const result = await ctx.rebuild()
+        const code = result.outputFiles[0].text
         const detectedGrant = detectGrantFunctions(code, grantFunctions)
 
         userScriptConfig.grant = unique(
