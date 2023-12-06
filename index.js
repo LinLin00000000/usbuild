@@ -42,6 +42,13 @@ export async function build(
         outExtension: { '.js': '.user.js' },
         dropLabels: ['usbuild'], // 因为历史原因暂时保留
         plugins: [esbuildPluginRemoveImportUsbuild(filePath)],
+        format: 'esm',
+        banner: {
+            js: '(async function () {\n',
+        },
+        footer: {
+            js: '\n})();',
+        },
     }
 
     // 🕵️‍♂️ 我们用 portfinder 来获取一个可用的端口，就像找到一个没有人使用的秘密通道。
