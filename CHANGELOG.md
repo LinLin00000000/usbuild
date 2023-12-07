@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.2](https://github.com/LinLin00000000/usbuild/compare/v1.7.1...v1.7.2) (2023-12-07)
+
+
+### Bug Fixes
+
+* 修复多层 outdir 下的文件夹不存在的问题 ([5193a7d](https://github.com/LinLin00000000/usbuild/commit/5193a7ddd4fe701ceeba4ea744c516bfc74eba14))
+
 ## [1.7.1](https://github.com/LinLin00000000/usbuild/compare/v1.7.0...v1.7.1) (2023-12-06)
 
 
