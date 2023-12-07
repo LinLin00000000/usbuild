@@ -30,7 +30,9 @@ export async function build(
     const finalOutdir = path.join(fileDir, outdir)
 
     if (!fs.existsSync(finalOutdir)) {
-        fs.mkdirSync(finalOutdir)
+        fs.mkdirSync(finalOutdir, {
+            recursive: true,
+        })
     }
 
     // 📦 配置 esbuild，让你的代码像魔法一样自动转化并打包。
