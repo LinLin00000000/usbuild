@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.8.0](https://github.com/LinLin00000000/usbuild/compare/v1.7.2...v1.8.0) (2023-12-20)
+
+
+### Features
+
+* 增加 autoReloadDelay 参数，以避免太过频繁刷新页面，默认值为 1000 ms ([0fb7af1](https://github.com/LinLin00000000/usbuild/commit/0fb7af1cc4bf807d470d34f50ad9445702a31311))
+* 增加 enableLocalFileRequireInDev 参数 ([33b4b9a](https://github.com/LinLin00000000/usbuild/commit/33b4b9aa06e5cb409a68d5bc344d0fd123f2f2d3))
+
 ## [1.7.2](https://github.com/LinLin00000000/usbuild/compare/v1.7.1...v1.7.2) (2023-12-07)
 
 
