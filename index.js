@@ -14,6 +14,7 @@ export async function build(
         host = '127.0.0.1',
         port = 7100,
         autoReload = true,
+        enableLocalFileRequireInDev = false,
     } = {}
 ) {
     // 🌟 获取调用这个函数的文件的路径，就像一名神秘的探险家寻找宝藏地图。
@@ -79,22 +80,38 @@ export async function build(
         ctx = await esbuild.context(esbuildOptions)
         await ctx.watch()
 
-        // 自动刷新的来源, See https://esbuild.github.io/api/#live-reload
-        const eventSourceURL = baseURL + 'esbuild'
-
         // 开发模式下默认申请所有权限
         userScriptConfig.grant = unique(
             mergeArrays(userScriptConfig.grant, grantFunctions)
         )
 
-        const proxyScriptContent =
-            bannerBuilder(userScriptConfig) +
-            proxyScript(targetFileURL, autoReload, eventSourceURL)
+        if (enableLocalFileRequireInDev) {
+            userScriptConfig.require = mergeArrays(
+                userScriptConfig.require,
+                `file://${targetFilePath}`
+            )
+        }
+
+        const codes = [bannerBuilder(userScriptConfig)]
+
+        if (!enableLocalFileRequireInDev) {
+            codes.push(
+                createAndInsertScript(targetFileURL),
+                grantAccessToUnsafeWindow()
+            )
+        }
+
+        if (autoReload) {
+            // 自动刷新的来源, See https://esbuild.github.io/api/#live-reload
+            codes.push(setupAutoReload(baseURL + 'esbuild'))
+        }
+
+        const proxyScriptContent = codes.join('\n')
 
         // ✍️ 将这个精心准备的中间脚本写入文件，就像在一个神秘的卷轴上写下了古老的咒语。
         fs.writeFileSync(proxyFilePath, proxyScriptContent)
 
-        console.log(`👀 Watching on ${targetFileURL}`)
+        console.log(`👀 Watching...`)
     } else {
         // 🚚 在非开发模式下，我们一举完成构建，一切都准备就绪！
         console.log('🚀 building...')
@@ -248,15 +265,16 @@ function unique(iterable) {
     return [...new Set(iterable)]
 }
 
-function proxyScript(src, autoReload, eventSourceURL) {
+function grantAccessToUnsafeWindow() {
+    return grantFunctions
+        .filter(name => !name.includes('.'))
+        .concat('GM')
+        .map(f => `if(window.${f}) unsafeWindow.${f} = ${f};`)
+        .join('\n')
+}
+
+function createAndInsertScript(src) {
     return `
-
-${grantFunctions
-    .filter(name => !name.includes('.'))
-    .concat('GM')
-    .map(f => `if(window.${f}) unsafeWindow.${f} = ${f};`)
-    .join('\n')}
-
 // 🎭 创建一个崭新的 script 元素，就像是在舞台上准备一个新的表演道具。
 const script = document.createElement('script');
 
@@ -267,14 +285,17 @@ script.src = '${src}';
 const head = document.head;
 
 // 🚀 将 script 元素插入到 head 的最前端，确保它是第一个被执行的脚本，就像是开场的第一幕。
-head.insertBefore(script, head.firstChild);
-
-${
-    autoReload
-        ? `new EventSource('${eventSourceURL}').addEventListener('change', () => location.reload());`
-        : ''
+head.insertBefore(script, head.firstChild);    
+`
 }
 
+function setupAutoReload(eventSourceURL) {
+    return `
+let debounceTimer;
+new EventSource('${eventSourceURL}').addEventListener('change', () => {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => location.reload(), 500);
+})
 `
 }
 
