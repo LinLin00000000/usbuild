@@ -14,6 +14,7 @@ export async function build(
         host = '127.0.0.1',
         port = 7100,
         autoReload = true,
+        autoReloadDelay = 1000,
         enableLocalFileRequireInDev = false,
     } = {}
 ) {
@@ -103,7 +104,7 @@ export async function build(
 
         if (autoReload) {
             // 自动刷新的来源, See https://esbuild.github.io/api/#live-reload
-            codes.push(setupAutoReload(baseURL + 'esbuild'))
+            codes.push(setupAutoReload(baseURL + 'esbuild', autoReloadDelay))
         }
 
         const proxyScriptContent = codes.join('\n')
@@ -289,12 +290,12 @@ head.insertBefore(script, head.firstChild);
 `
 }
 
-function setupAutoReload(eventSourceURL) {
+function setupAutoReload(eventSourceURL, autoReloadDelay) {
     return `
 let debounceTimer;
 new EventSource('${eventSourceURL}').addEventListener('change', () => {
     clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(() => location.reload(), 500);
+    debounceTimer = setTimeout(() => location.reload(), ${autoReloadDelay});
 })
 `
 }
