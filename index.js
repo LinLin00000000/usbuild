@@ -5,7 +5,20 @@ import open, { apps } from 'open'
 import portfinder from 'portfinder'
 import babel from '@babel/core'
 
-// 🚀 构建函数，让你的油猴脚本起飞！
+/**
+ * 🚀 构建函数，让你的油猴脚本起飞！
+ * 
+ * @param {Object} userScriptConfig - 用户脚本配置对象。
+ * @param {Object} options - 可选的配置参数对象。
+ * @param {boolean} [options.dev=false] - 是否为开发模式，默认为 false。
+ * @param {string} [options.outdir='dist'] - 输出目录，默认为 'dist'。
+ * @param {string} [options.host='127.0.0.1'] - 服务器主机地址，默认为 '127.0.0.1'。
+ * @param {number} [options.port=7100] - 服务器端口，默认为 7100。
+ * @param {boolean} [options.autoReload=true] - 是否自动重载，默认为 true。
+ * @param {number} [options.autoReloadDelay=1000] - 自动重载延迟时间（毫秒），默认为 1000。
+ * @param {boolean} [options.enableLocalFileRequireInDev=false] - 在开发模式下是否启用加载本地文件来绕过 CSP，默认为 false。
+ * @returns {Promise<any>} 返回一个永不会产生结果的 Promise，以阻塞程序往下运行
+ */
 export async function build(
     userScriptConfig = {},
     {
