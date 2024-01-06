@@ -15,6 +15,7 @@ import babel from '@babel/core'
  * @param {string} [options.host='127.0.0.1'] - 服务器主机地址，默认为 '127.0.0.1'。
  * @param {number} [options.port=7100] - 服务器端口，默认为 7100。
  * @param {boolean} [options.autoReload=true] - 是否自动重载，默认为 true。
+ * @param {string} [options.autoReloadMode='refresh'] - 自动重载模式，值为'refresh' 或 'reinstall'。默认为 'refresh'。
  * @param {number} [options.autoReloadDelay=1000] - 自动重载延迟时间（毫秒），默认为 1000。
  * @param {boolean} [options.enableLocalFileRequireInDev=false] - 在开发模式下是否启用加载本地文件来绕过 CSP，默认为 false。如果启用该功能，需在浏览器扩展中同时设置油猴允许访问本地文件。
  * @returns {Promise<any>} 返回一个永不会产生结果的 Promise，以阻塞程序往下运行

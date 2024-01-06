@@ -97,6 +97,12 @@ const 超大声 = alert
 
     🔄 控制是否开启自动刷新的魔法开关（也就是实时热重载）。当源文件变化时，它就像灵巧的小精灵，自动更新网页，让变化瞬间呈现，免去了手动刷新的麻烦。
 
+  - `autoReloadMode`
+
+    默认值 `refresh`
+
+    🧶 控制自动重载的模式，可选值为 `refresh` 和 `reinstall`。`refresh` 以刷新网页的方式自动重载，`reinstall` 以重新安装脚本的方式自动重载。
+
   - `autoReloadDelay`
 
     默认值 `1000`
