@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.9.0](https://github.com/LinLin00000000/usbuild/compare/v1.8.0...v1.9.0) (2024-01-06)
+
+
+### Features
+
+* 增加reload模式，原本为刷新网页，加一个重新安装脚本的方法 ([2e8710a](https://github.com/LinLin00000000/usbuild/commit/2e8710abc790c0bfca3e50918d0f18de5dfc2600))
+
 ## [1.8.0](https://github.com/LinLin00000000/usbuild/compare/v1.7.2...v1.8.0) (2023-12-20)
 
 
