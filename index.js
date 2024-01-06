@@ -7,7 +7,7 @@ import babel from '@babel/core'
 
 /**
  * 🚀 构建函数，让你的油猴脚本起飞！
- * 
+ *
  * @param {Object} userScriptConfig - 用户脚本配置对象。
  * @param {Object} options - 可选的配置参数对象。
  * @param {boolean} [options.dev=false] - 是否为开发模式，默认为 false。
@@ -27,6 +27,7 @@ export async function build(
         host = '127.0.0.1',
         port = 7100,
         autoReload = true,
+        autoReloadMode = 'refresh',
         autoReloadDelay = 1000,
         enableLocalFileRequireInDev = false,
     } = {}
@@ -117,7 +118,13 @@ export async function build(
 
         if (autoReload) {
             // 自动刷新的来源, See https://esbuild.github.io/api/#live-reload
-            codes.push(setupAutoReload(baseURL + 'esbuild', autoReloadDelay))
+            codes.push(
+                setupAutoReload(
+                    baseURL + 'esbuild',
+                    autoReloadMode,
+                    autoReloadDelay
+                )
+            )
         }
 
         const proxyScriptContent = codes.join('\n')
@@ -289,26 +296,36 @@ function grantAccessToUnsafeWindow() {
 
 function createAndInsertScript(src) {
     return `
-// 🎭 创建一个崭新的 script 元素，就像是在舞台上准备一个新的表演道具。
-const script = document.createElement('script');
+function insertScript() {
+    // 🎭 创建一个崭新的 script 元素，就像是在舞台上准备一个新的表演道具。
+    const script = document.createElement('script');
 
-// 🌐 设置 script 元素的源文件。这里我们将使用 '${src}' 作为我们神秘脚本的来源。
-script.src = '${src}';
+    // 🌐 设置 script 元素的源文件。这里我们将使用 '${src}' 作为我们神秘脚本的来源。
+    script.src = '${src}';
 
-// 🕵️‍♂️ 获取文档的 head 元素，就像是找到了控制整个页面的大脑。
-const head = document.head;
+    // 🕵️‍♂️ 获取文档的 head 元素，就像是找到了控制整个页面的大脑。
+    const head = document.head;
 
-// 🚀 将 script 元素插入到 head 的最前端，确保它是第一个被执行的脚本，就像是开场的第一幕。
-head.insertBefore(script, head.firstChild);    
+    // 🚀 将 script 元素插入到 head 的最前端，确保它是第一个被执行的脚本，就像是开场的第一幕。
+    head.insertBefore(script, head.firstChild);
+
+    return () => head.removeChild(script);
+}
 `
 }
 
-function setupAutoReload(eventSourceURL, autoReloadDelay) {
+function setupAutoReload(eventSourceURL, autoReloadMode, autoReloadDelay) {
+    const autoReloadModeMap = {
+        refresh: 'location.reload();',
+        reinstall: 'remove(); remove = insertScript();',
+    }
+
     return `
+let remove = insertScript()
 let debounceTimer;
 new EventSource('${eventSourceURL}').addEventListener('change', () => {
     clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(() => location.reload(), ${autoReloadDelay});
+    debounceTimer = setTimeout(() => {${autoReloadModeMap[autoReloadMode]}}, ${autoReloadDelay});
 })
 `
 }
