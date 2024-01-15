@@ -60,7 +60,7 @@ export async function build(
         charset: 'utf8',
         outExtension: { '.js': '.user.js' },
         dropLabels: ['usbuild'], // 因为历史原因暂时保留
-        plugins: [esbuildPluginRemoveImportUsbuild(filePath)],
+        plugins: [ignoreSelfPlugin],
         format: 'esm',
         banner: {
             js: '\n;(async function () {',
@@ -220,21 +220,20 @@ function getCallerFilePath() {
     // 🧩 将堆栈信息切割成多行，从中找出我们需要的线索。
     const stackLines = stack.split('\n')
 
-    // 🕵️‍♂️ 在堆栈的迷宫中，第一行通常是 'Error'，它像是一个告示牌，告诉我们出现了错误。
-    // 第二行是当前函数的呼唤，就像是留下的脚印。第三行则是 usbuild 函数的召唤，它标志着我们的起点。
-    // 所以，第四行才是我们真正的宝藏——实际的调用者，就像是藏宝图上标记的X。
-    const callerLine = stackLines[3]
+    let result
+    for (let i = 2; i < stackLines.length; i++) {
+        const match = stackLines[i].match(
+            /(?:at file:\/\/\/)([^]+?):\d+:\d+/
+        )
+        if (match && match[1]) {
+            result = match[1]
+        }
+    }
 
-    // 🔗 捕获文件路径，就像取得了宝藏。
-    const match = callerLine.match(/(?:file:\/\/\/|[(])([^]+?):\d+:\d+/)
-
-    if (match && match[1]) {
-        // 🌟 如果我们成功地捕捉到了文件路径，就像一名优秀的宝藏猎人发现了藏宝图的秘密位置，那么就愉快地返回它！
-        return match[1]
-    } else {
-        // 🚨 呀！路径没找到？这就像在密林中迷了路立即发送SOS信号：抛出一个寻求帮助的错误，告诉世界我们需要帮助！
+    if (result === undefined) {
         throw new Error('无法获取文件路径: ' + callerLine)
     }
+    return result
 }
 
 // 🎨 构建 UserScript 头部注释的工具，就像一个艺术家在画布上绘制画作。
@@ -250,22 +249,24 @@ function bannerBuilder(config) {
     const maxLen = Math.max(...Object.keys(finalConfig).map(s => s.length))
 
     // 🖋️ 为每个配置项创建一个独特的注释行。就像是在画布上细心地勾勒出每一个重要的元素。
-    const fields = Object.entries(finalConfig).map(([key, value]) => {
-        // 📐 为了美观，我们在每个键和值之间加上恰到好处的空格。就像是在文字和文字之间留下呼吸的空间。
-        const space = ' '.repeat(maxLen - key.length + spaceNum)
-        const keyString = `// @${key}${space}`
+    const fields = Object.entries(finalConfig)
+        .map(([key, value]) => {
+            // 📐 为了美观，我们在每个键和值之间加上恰到好处的空格。就像是在文字和文字之间留下呼吸的空间。
+            const space = ' '.repeat(maxLen - key.length + spaceNum)
+            const keyString = `// @${key}${space}`
 
-        // 🌈 如果值是数组，我们就为数组中的每个元素都创建一个注释行。这就像是在画布上添加多彩的细节。
-        // 🖋️ 如果不是数组，那就简单地连接键和值，完成这一行的绘制。
-        return Array.isArray(value)
-            ? value.map(e => keyString + e).join(separator)
-            : keyString + value
-    })
+            // 🌈 如果值是数组，我们就为数组中的每个元素都创建一个注释行。这就像是在画布上添加多彩的细节。
+            // 🖋️ 如果不是数组，那就简单地连接键和值，完成这一行的绘制。
+            return Array.isArray(value)
+                ? value.map(e => keyString + e).join(separator)
+                : keyString + value
+        })
+        .filter(Boolean)
 
     // 📜 组合头部和尾部注释，完成这部 UserScript 的序幕。
     const header = `// ==UserScript==`
     const footer = `// ==/UserScript==`
-    return [header, ...fields, footer, ''].join(separator)
+    return [header, ...fields, footer, separator].join(separator)
 }
 
 /**
@@ -343,70 +344,6 @@ function installScript(url) {
     })
 }
 
-function esbuildPluginRemoveImportUsbuild(entryPoint) {
-    return {
-        name: 'removeImportUsbuild',
-        setup(build) {
-            const { base, dir } = path.parse(entryPoint)
-            const namespace = base + ' '
-            const cache = {}
-
-            build.onResolve({ filter: /.*/ }, args => {
-                if (args.kind === 'entry-point') {
-                    return {
-                        namespace,
-                        path: ')',
-                        watchFiles: [entryPoint],
-                    }
-                }
-            })
-            build.onLoad({ filter: /.*/, namespace }, args => {
-                const input = fs.readFileSync(entryPoint, 'utf8')
-                const value = cache[entryPoint]
-
-                if (!value || value.input !== input) {
-                    const { code } = babel.transformSync(input, {
-                        plugins: [babelPluginRemoveImportUsbuild],
-                    })
-                    cache[entryPoint] = { input, output: code }
-                }
-
-                return {
-                    resolveDir: dir,
-                    contents: cache[entryPoint].output,
-                }
-            })
-        },
-    }
-
-    function babelPluginRemoveImportUsbuild({ types: t }) {
-        return {
-            visitor: {
-                ImportDeclaration(path) {
-                    if (path.node.source.value.match(/usbuild$/)) {
-                        const names = path.node.specifiers
-                            .filter(t.isImportSpecifier)
-                            .map(specifier => specifier.local.name)
-
-                        this.importedNames = new Set(names)
-                        path.remove()
-                    }
-                },
-                AwaitExpression(path) {
-                    const callExpression = path.node.argument
-                    const calleeName = callExpression.callee.name
-                    if (
-                        t.isCallExpression(callExpression) &&
-                        this.importedNames.has(calleeName)
-                    ) {
-                        path.remove()
-                    }
-                },
-            },
-        }
-    }
-}
-
 function detectGrantFunctions(code, functions) {
     const babelPluginDetectGrantFunctionsName = 'detect-grant-functions'
     const { metadata } = babel.transformSync(code, {
@@ -441,4 +378,24 @@ function detectGrantFunctions(code, functions) {
             },
         }
     }
+}
+
+const ignoreSelfPlugin = {
+    name: 'ignoreSelfPlugin',
+    setup(build) {
+        const tip = '这是力量的代价，不可避免 '
+        build.onResolve({ filter: /\/usbuild$/ }, args => {
+            return {
+                path: ')',
+                namespace: tip,
+            }
+        })
+
+        build.onLoad({ filter: /^\)$/, namespace: tip }, () => {
+            return {
+                contents: `function __usbuild(){} export { __usbuild as build }`,
+                loader: 'js',
+            }
+        })
+    },
 }
