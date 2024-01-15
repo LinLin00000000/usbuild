@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.10.0](https://github.com/LinLin00000000/usbuild/compare/v1.9.0...v1.10.0) (2024-01-15)
+
+
+### Features
+
+* （移除 usbuild 库本身）插件部分使用回之前的力量代价版本以降低源码复杂度 ([cf64324](https://github.com/LinLin00000000/usbuild/commit/cf64324ab339a9f3d2b022a61598633750158866))
+* 支持封装 build 函数 ([cf64324](https://github.com/LinLin00000000/usbuild/commit/cf64324ab339a9f3d2b022a61598633750158866))
+
 ## [1.9.0](https://github.com/LinLin00000000/usbuild/compare/v1.8.0...v1.9.0) (2024-01-06)
 
 
