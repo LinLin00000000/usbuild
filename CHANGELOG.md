@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.10.1](https://github.com/LinLin00000000/usbuild/compare/v1.10.0...v1.10.1) (2024-03-04)
+
+
+### Bug Fixes
+
+* 修复 linux 下绝对路径匹配的问题 ([ed7a344](https://github.com/LinLin00000000/usbuild/commit/ed7a3448795bb1e857ef4c558a1255b52d3bc74d)), closes [#18](https://github.com/LinLin00000000/usbuild/issues/18)
+
 ## [1.10.0](https://github.com/LinLin00000000/usbuild/compare/v1.9.0...v1.10.0) (2024-01-15)
 
 
