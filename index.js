@@ -223,7 +223,7 @@ function getCallerFilePath() {
     let result
     for (let i = 2; i < stackLines.length; i++) {
         const match = stackLines[i].match(
-            /(?:at file:\/\/\/)([^]+?):\d+:\d+/
+            /(?:at file:\/+)((?:[a-zA-Z]:|\/)[^]+?):\d+:\d+/
         )
         if (match && match[1]) {
             result = match[1]
